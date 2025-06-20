@@ -1,0 +1,100 @@
+{{- $workloadType := .Values.workloadType | default "Deployment" }}
+apiVersion: apps/v1
+kind: {{ $workloadType }}
+metadata:
+  name: {{ include "common.fullname" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  {{- if eq $workloadType "StatefulSet" }}
+  serviceName: {{ .Chart.Name }}-headless
+  {{- end }}
+  {{- if and (ne $workloadType "DaemonSet") (not .Values.autoscaling.enabled) }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "common.selectorLabels" . | nindent 6 }}
+  {{- if and (eq $workloadType "Deployment") .Values.strategy }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  {{- end }}
+  {{- if and (or (eq $workloadType "StatefulSet") (eq $workloadType "DaemonSet")) .Values.updateStrategy }}
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "common.labels" . | nindent 8 }}
+    spec:
+      imagePullSecrets: {{ include "common.imagePullSecrets" . | indent 8 }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if ne $workloadType "DaemonSet" }}
+        {{- with .Values.affinity }}
+        affinity:
+          {{- toYaml . | nindent 8 }}
+        {{ else }}
+        {{/* Default Affinities is soft podAntiAffinity. */}}
+        {{- include "common.affinities" (dict "context" $) | nindent 6 }}
+        {{/* Use the following to set specific affinities if needed */}}
+        {{/*
+        {{- include "common.affinities" (dict "pod" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
+        {{- include "common.affinities" (dict "pod" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
+        {{- include "common.affinities" (dict "podAnti" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
+        {{- include "common.affinities" (dict "podAnti" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
+        {{- include "common.affinities" (dict "node" (dict "type" "hard" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
+        {{- include "common.affinities" (dict "node" (dict "type" "soft" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
+        */}}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "common.image" . }}
+          {{- if .Values.image.pullSecret }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- end }}
+          ports:
+            {{- range .Values.service.ports }}
+            - name: {{ .name }}
+              containerPort: {{ .targetPort }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+          env:
+            {{- if .Values.global.timezone }}
+            - name: TZ
+              value: {{ .Values.global.timezone | quote }}
+            {{- end }}
+            {{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.volumeMounts | nindent 12 }}
+          {{- end }}
+      {{- if .Values.volumes }}
+      volumes:
+        {{- toYaml .Values.volumes | nindent 8 }}
+      {{- end }}
