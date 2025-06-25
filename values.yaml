@@ -1,8 +1,8 @@
-# Global values
-global:
-  imageRegistry: ghcr.io
-  imagePullSecrets: abc
-  timezone: Asia/Ho_Chi_Minh
+# # Global values
+# global:
+#   imageRegistry: ghcr.io
+#   imagePullSecrets: abc
+#   timezone: Asia/Ho_Chi_Minh
 # Default values for sample-chart.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.

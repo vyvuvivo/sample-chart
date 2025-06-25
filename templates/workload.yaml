@@ -1,4 +1,8 @@
 {{- $workloadType := .Values.workloadType | default "Deployment" }}
+{{- $timezone := "Asia/Ho_Chi_Minh" }}
+{{- if and (hasKey .Values "global") (hasKey .Values.global "timezone") }}
+{{- $timezone = .Values.global.timezone }}
+{{- end }}
 apiVersion: apps/v1
 kind: {{ $workloadType }}
 metadata:
@@ -72,10 +76,8 @@ spec:
               protocol: {{ .protocol | default "TCP" }}
             {{- end }}
           env:
-            {{- if .Values.global.timezone }}
             - name: TZ
-              value: {{ .Values.global.timezone | quote }}
-            {{- end }}
+              value: {{ default $timezone | quote }}
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}

@@ -5,7 +5,11 @@ If image.registry is "ghcr.io", include the registry in the image string.
 Otherwise, use image.repository directly.
 */}}
 {{- define "common.image" -}}
-{{- $registry := default .Values.image.registry .Values.global.imageRegistry }}
+{{- $globalRegistry := "" }}
+{{- if and (hasKey .Values "global") (hasKey .Values.global "imageRegistry") }}
+  {{- $globalRegistry = .Values.global.imageRegistry }}
+{{- end }}
+{{- $registry := default .Values.image.registry $globalRegistry }}
 {{- $repository := .Values.image.repository }}
 {{- $tag := default .Values.image.tag .Chart.AppVersion }}
 {{- if $registry }}
@@ -22,7 +26,7 @@ Return the imagePullSecrets list, combining global.imagePullSecrets and image.im
 {{- define "common.imagePullSecrets" -}}
   {{- $pullSecrets := list }}
 
-  {{- if .Values.global.imagePullSecrets }}
+  {{- if and (hasKey .Values "global") (hasKey .Values.global "imagePullSecrets") }}
     {{- $pullSecrets = append $pullSecrets .Values.global.imagePullSecrets -}}
   {{- end -}}
 
