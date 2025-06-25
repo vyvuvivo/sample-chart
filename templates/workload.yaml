@@ -35,32 +35,32 @@ spec:
       imagePullSecrets: {{ include "common.imagePullSecrets" . | indent 8 }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       {{- if ne $workloadType "DaemonSet" }}
-        {{- with .Values.affinity }}
-        affinity:
-          {{- toYaml . | nindent 8 }}
-        {{ else }}
-        {{/* Default Affinities is soft podAntiAffinity. */}}
-        {{- include "common.affinities" (dict "context" $) | nindent 6 }}
-        {{/* Use the following to set specific affinities if needed */}}
-        {{/*
-        {{- include "common.affinities" (dict "pod" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
-        {{- include "common.affinities" (dict "pod" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
-        {{- include "common.affinities" (dict "podAnti" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
-        {{- include "common.affinities" (dict "podAnti" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
-        {{- include "common.affinities" (dict "node" (dict "type" "hard" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
-        {{- include "common.affinities" (dict "node" (dict "type" "soft" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
-        */}}
-        {{- end }}
-      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- else -}}
+      {{/* Default Affinities is soft podAntiAffinity. */}}
+      {{- include "common.affinities" (dict "context" $) | nindent 6 }}
+      {{/* Use the following to set specific affinities if needed */}}
+      {{/*
+      {{- include "common.affinities" (dict "pod" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
+      {{- include "common.affinities" (dict "pod" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
+      {{- include "common.affinities" (dict "podAnti" (dict "type" "hard" "name" "FOO") "context" $) | nindent 6 }}
+      {{- include "common.affinities" (dict "podAnti" (dict "type" "soft" "name" "FOO") "context" $) | nindent 6 }}
+      {{- include "common.affinities" (dict "node" (dict "type" "hard" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
+      {{- include "common.affinities" (dict "node" (dict "type" "soft" "key" "FOO" "values" (list "BAR" "BAZ")) "context" $) | nindent 6 }}
+      */}}
+      {{- end -}}
+      {{- end -}}
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+      {{- end -}}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end -}}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
@@ -82,21 +82,19 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
-          {{- if .Values.livenessProbe }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe | nindent 12 }}
-          {{- end }}
-          {{- if .Values.readinessProbe }}
           readinessProbe:
             {{- toYaml .Values.readinessProbe | nindent 12 }}
-          {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.volumeMounts }}
           volumeMounts:
+            {{- /* unshareVolume(volumeMount): define in the chart's values.yaml */ -}}
+            {{- if .Values.volumeMounts }}
             {{- toYaml .Values.volumeMounts | nindent 12 }}
-          {{- end }}
-      {{- if .Values.volumes }}
+            {{- end }}
       volumes:
+      {{- /* unshareVolume(volume): define in the chart's values.yaml */ -}}
+        {{- if .Values.volumes }}
         {{- toYaml .Values.volumes | nindent 8 }}
-      {{- end }}
+        {{- end }}

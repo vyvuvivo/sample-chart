@@ -60,3 +60,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Expand the name of the chart.
+*/}}
+{{- define "joinList" }}
+  {{- $list := list }}
+  {{- range .arr }}
+    {{- $list = append $list .host }}
+  {{- end }}
+  {{- join "," $list }}
+{{- end }}
