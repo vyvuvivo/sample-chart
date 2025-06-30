@@ -11,7 +11,7 @@ Otherwise, use image.repository directly.
 {{- end }}
 {{- $registry := default .Values.image.registry $globalRegistry }}
 {{- $repository := .Values.image.repository }}
-{{- $tag := default .Values.image.tag .Chart.AppVersion }}
+{{- $tag := default "latest" .Values.image.tag }}
 {{- if $registry }}
 {{- printf "%s/%s:%s" $registry $repository $tag }}
 {{- else }}
